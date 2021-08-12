@@ -1,0 +1,84 @@
+select distinct(T.COD),
+    T.NOME,
+    T.BRAS,
+    --T.CLASSIF,
+    --T.TIPO_REF,
+    R.NOME as REF_NOME,
+    --B.codref as ref_tbrefuni,
+    R.cod_tuss_brasindice AS TUSS_BRASSINDIC,
+    --t.cod_tuss_brasindice as aa,
+/*(
+        SELECT fcr.cod
+        FROM fcrefund fcr
+            left JOIN tbrefmemtuss tuss on fcr.cod = tuss.cod_fcrefund
+            and fcr.tab = tuss.tab_fcrefund
+            and fcr.classif = tuss.classif_fcrefund
+        where fcr.cod = b.codref
+            and fcr.tab = b.tab
+            and fcr.classif = b.classif
+            and fcr.data in (
+                select max(FCREFUND.DATA)
+                from FCREFUND
+                where FCREFUND.COD = Fcr.cod
+                    and FCREFUND.TAB = FCR.tab
+            )
+            and tuss.cod_tuss > 0
+    ) tuss_tabela_referencia, */
+    case when 
+
+        R.cod_tuss_brasindice <>
+
+ (
+        SELECT fcr.cod
+        FROM fcrefund fcr
+            left JOIN tbrefmemtuss tuss on fcr.cod = tuss.cod_fcrefund
+            and fcr.tab = tuss.tab_fcrefund
+            and fcr.classif = tuss.classif_fcrefund
+        where fcr.cod = b.codref
+            and fcr.tab = b.tab
+            and fcr.classif = b.classif
+            and fcr.data in (
+                select max(FCREFUND.DATA)
+                from FCREFUND
+                where FCREFUND.COD = Fcr.cod
+                    and FCREFUND.TAB = FCR.tab
+            )
+            and tuss.cod_tuss > 0
+    )
+
+then
+
+ (
+        SELECT fcr.cod
+        FROM fcrefund fcr
+            left JOIN tbrefmemtuss tuss on fcr.cod = tuss.cod_fcrefund
+            and fcr.tab = tuss.tab_fcrefund
+            and fcr.classif = tuss.classif_fcrefund
+        where fcr.cod = b.codref
+            and fcr.tab = b.tab
+            and fcr.classif = b.classif
+            and fcr.data in (
+                select max(FCREFUND.DATA)
+                from FCREFUND
+                where FCREFUND.COD = Fcr.cod
+                    and FCREFUND.TAB = FCR.tab
+            )
+            and tuss.cod_tuss > 0
+    )   end
+
+from TBMATMED T
+    left join TBMATMED R on (
+        T.TIPO_REF = R.TAB
+        and T.BRAS = R.COD
+    )
+    inner JOIN gearmloc a ON A.item = T.cod
+    LEFT JOIN tbrefuni B ON T.cod = B.cod
+    AND B.tab = T.tab
+where T.TAB = 5
+    and T.SITUACAO = 'A'
+    AND A.ano = :Ano
+    AND A.mes = :Mes
+    AND A.local = :Local
+    AND T.CLASSIF = :Class
+    AND A.qtde <> 0
+    order by T.COD
