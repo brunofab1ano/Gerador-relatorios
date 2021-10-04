@@ -47,12 +47,11 @@ from gecadsai d
     inner join geitens i on l.item = i.cod --where d.pac between ? and ? and d.dest=?
     --and d.arm between ? and ?
     --and d.cdc between ? and ?
-    and d.data between '01.01.2021' and '30.09.2021'
+    and d.data >= '01.01.2021'
     and l.consol = 'T'
     and d.dest != 2
     and p.data_hora_prescricao > ri.alta
     and ri.alta != '30.12.1899'
-    --and ri.reg = 190465
 GROUP BY
     d.pac,
     bloco,
