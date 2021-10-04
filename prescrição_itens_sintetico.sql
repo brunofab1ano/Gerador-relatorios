@@ -2,26 +2,18 @@ with cte as  (
 select
     d.pac reg,
     ri.bloco,
-    d.dest,
-    case
-    d.dest
-    when '1' then 'Saida para Paciente interno'
-    when '3' then 'Saida para Externo '
-   end Destino,
     d.id_presc presc,
     p.data_hora_prescricao,
     p.data_hora_final_vigencia,
     ri.alta || ' : ' || ri.horasai Hora_alta,
     pro.nome n_medico_prescr,
-    d.ano,
-    d.mes,
     d.doc,
     d.data data_doc,
     d.cdc,
     classif,
     l.item,
     i.nome,
-    l.qtde qt_Item_saida,
+    l.qtde saida,
     sum(l.qtde) - coalesce(
         sum(
             (
@@ -52,46 +44,39 @@ from gecadsai d
     and d.dest != 2
     and p.data_hora_prescricao > ri.alta
     and ri.alta != '30.12.1899'
+    --and ri.reg = 182124
 GROUP BY
     d.pac,
     bloco,
-    d.dest,
-    Destino,
     Hora_alta,
     p.data_hora_prescricao,
     p.data_hora_final_vigencia,
     n_medico_prescr,
     presc,
-    d.ano,
-    d.mes,
     d.doc,
     d.data,
     d.cdc,
     classif,
     l.item,
     i.nome ,
-    qt_Item_saida
+    saida
 )
 
 select
+    distinct
     reg,
     bloco,
-    dest,
-    Destino,
     presc,
     data_hora_prescricao,
     data_hora_final_vigencia,
     Hora_alta  ,
     n_medico_prescr,
-    ano,
-    mes,
     doc,
     data_doc,
     cdc,
-    classif,
-    item,
-    nome,
-    qt_Item_saida,
-    consumo,
-    qt_Item_saida -  consumo devol
+    sum(saida) over(partition by doc) saida,
+    sum(consumo) over(partition by doc) consumo,
+    sum(saida) over(partition by doc) - sum(consumo) over(partition by doc) devolucao
 from cte
+--order by reg, bloco, presc, data_hora_prescricao, data_hora_final_vigencia, Hora_alta, n_medico_prescr, doc, data_doc, cdc, saida, consumo, devolucao
+order by reg, presc, n_medico_prescr, data_hora_prescricao, data_hora_final_vigencia, Hora_alta
