@@ -12,8 +12,22 @@ select * from
     aa.mes,
     (select tbprosus.nome from tbprosus where aa.prosol = tbprosus.id) procPrincipal,
     cc.qtde,
-    (select tbvlrsus.valor_sh from tbvlrsus where tbvlrsus.id = dd.id) vl_unit,
-    cc.qtde * ( select tbvlrsus.valor_sh from tbvlrsus where tbvlrsus.id = dd.id) valorTotal,
+   (
+        select  max(vlsus.valor_sh)
+        from tbprosus prosus
+        inner join tbvlrsus vlsus on (prosus.id = vlsus.id_tbprosus)
+        where prosus.codsus = dd.codsus
+        and extract(month from vlsus.data) = extract(month from bb.data)
+        and extract(year from vlsus.data) = extract(year from bb.data)
+    )vl_unit,
+    cc.qtde * (
+        select  max(vlsus.valor_sh)
+        from tbprosus prosus
+        inner join tbvlrsus vlsus on (prosus.id = vlsus.id_tbprosus)
+        where prosus.codsus = dd.codsus
+        and extract(month from vlsus.data) = extract(month from bb.data)
+        and extract(year from vlsus.data) = extract(year from bb.data)
+    ) valorTotal,
     0 ref,
     '' ref_sus,
     '' desc_sus,
@@ -93,17 +107,28 @@ select
     '' ref_sus,
     '' desc_sus,
     (
-        Select DISTINCT sum ((ee.valor_sh * cc.qtde)) over( partition by aa.pac, 'Faturado')
-        from fhcadaih aa
-        inner join fhlancto bb on (aa.id = bb.id_fhcadaih)
-        inner join fhlanopm cc on (bb.id = cc.id_fhlancto)
-        left join tbprosus dd on (cc.id_material = dd.id)
-        left join tbvlrsus ee on ee.id = dd.id
-        where --aa.regint = 196213 AND
+
+
+     select distinct
+    SUM (cc.qtde * (
+        select  max(vlsus.valor_sh)
+        from tbprosus prosus
+        inner join tbvlrsus vlsus on (prosus.id = vlsus.id_tbprosus)
+        where prosus.codsus = dd.codsus
+        and extract(month from vlsus.data) = extract(month from bb.data)
+        and extract(year from vlsus.data) = extract(year from bb.data)
+    )) over( partition by aa.pac) valorTotal
+from fhcadaih aa
+   inner join fhlancto bb on (aa.id = bb.id_fhcadaih)
+   inner join fhlanopm cc on (bb.id = cc.id_fhlancto)
+   left join tbprosus dd on (cc.id_material = dd.id)
+where --aa.regint = 196213 AND
         aa.mes = :mes and
         aa.ano = :ano and
-        aa.prosol in ( 2006,2182,2283,2329,2330,2723,3374,3397,3398,3423)
-        and aa.pac = (select ricadpac.nome from ricadpac where ricadpac.id =d.id_ricadpac)
+        aa.prosol in ( 2006,2182,2283,2329,2330,2723,3374,3397,3398,3423) and
+        aa.pac = ( select ricadpac.nome from ricadpac where ricadpac.id =d.id_ricadpac)
+
+
     ) vl_Fat,
     cast (sum (case when i.vlrmed = 0 then i.vlr_unf * l.qtde else i.vlrmed * l.qtde end) over( partition by d.pac, 'Saidas' ) as numeric (18,2))vl_Saidas
 
